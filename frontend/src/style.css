@@ -12,3 +12,46 @@ body {
   color: #fff;
   font-family: Inter, system-ui, sans-serif;
 }
+
+/* ---------- Fade Up ---------- */
+
+.fade-up {
+  opacity: 0;
+  transform: translateY(24px);
+  animation: fadeUp .8s ease forwards;
+}
+
+.fade-up-delay-1 {
+  animation-delay: .15s;
+}
+
+.fade-up-delay-2 {
+  animation-delay: .3s;
+}
+
+.fade-up-delay-3 {
+  animation-delay: .45s;
+}
+
+@keyframes fadeUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---------- Float ---------- */
+
+.float {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%,100%{
+    transform:translateY(0);
+  }
+
+  50%{
+    transform:translateY(-8px);
+  }
+}

@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+html,
+body,
+#app {
+    width: 100%;
+    min-height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background: #0B0F19;
+    color: #ffffff;
+    font-family: Inter, sans-serif;
+}
