@@ -7,11 +7,33 @@ use Illuminate\Foundation\Http\FormRequest;
 class CreateCampaignRequest extends FormRequest
 {
     /**
-     * Determine if the user is authorized.
+     * Authorize request.
      */
     public function authorize(): bool
     {
         return true;
+    }
+
+    /**
+     * Prepare incoming data.
+     */
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+
+            'show_video_buttons' => filter_var(
+                $this->show_video_buttons,
+                FILTER_VALIDATE_BOOLEAN,
+                FILTER_NULL_ON_FAILURE
+            ),
+
+            'autoplay_video' => filter_var(
+                $this->autoplay_video,
+                FILTER_VALIDATE_BOOLEAN,
+                FILTER_NULL_ON_FAILURE
+            ),
+
+        ]);
     }
 
     /**
@@ -20,6 +42,12 @@ class CreateCampaignRequest extends FormRequest
     public function rules(): array
     {
         return [
+
+            /*
+            |--------------------------------------------------------------------------
+            | Basic Information
+            |--------------------------------------------------------------------------
+            */
 
             'song_title' => [
                 'required',
@@ -40,6 +68,12 @@ class CreateCampaignRequest extends FormRequest
                 'max:5120',
             ],
 
+            /*
+            |--------------------------------------------------------------------------
+            | YouTube
+            |--------------------------------------------------------------------------
+            */
+
             'youtube_video_url' => [
                 'nullable',
                 'url',
@@ -50,24 +84,30 @@ class CreateCampaignRequest extends FormRequest
                 'url',
             ],
 
-            'youtube_button_text' => [
-                'nullable',
-                'string',
-                'max:50',
-            ],
+            /*
+            |--------------------------------------------------------------------------
+            | Subscribe button is always "Subscribe"
+            |--------------------------------------------------------------------------
+            */
 
             'youtube_button_url' => [
                 'nullable',
                 'url',
             ],
 
-            'show_video' => [
-                'sometimes',
+            /*
+            |--------------------------------------------------------------------------
+            | Show / Hide Buttons
+            |--------------------------------------------------------------------------
+            */
+
+            'show_video_buttons' => [
+                'nullable',
                 'boolean',
             ],
 
             'autoplay_video' => [
-                'sometimes',
+                'nullable',
                 'boolean',
             ],
 
@@ -78,10 +118,15 @@ class CreateCampaignRequest extends FormRequest
                 'max:120',
             ],
 
+            /*
+            |--------------------------------------------------------------------------
+            | Platforms
+            |--------------------------------------------------------------------------
+            */
+
             'platforms' => [
-                'required',
+                'nullable',
                 'array',
-                'min:1',
             ],
 
             'platforms.*.platform_id' => [
@@ -90,7 +135,7 @@ class CreateCampaignRequest extends FormRequest
             ],
 
             'platforms.*.destination_url' => [
-                'required',
+                'nullable',
                 'url',
             ],
 
@@ -104,17 +149,20 @@ class CreateCampaignRequest extends FormRequest
     {
         return [
 
-            'song_title.required' => 'Song title is required.',
+            'song_title.required' =>
+                'Song title is required.',
 
-            'artwork.required' => 'Artwork is required.',
+            'artwork.required' =>
+                'Artwork is required.',
 
-            'artwork.image' => 'Artwork must be an image.',
+            'artwork.image' =>
+                'Artwork must be an image.',
 
-            'platforms.required' => 'Add at least one streaming platform.',
+            'platforms.*.platform_id.required' =>
+                'A platform is missing.',
 
-            'platforms.*.destination_url.required' => 'Every selected platform must have a destination URL.',
-
-            'platforms.*.destination_url.url' => 'Please enter a valid platform URL.',
+            'platforms.*.destination_url.url' =>
+                'Please enter a valid platform URL.',
 
         ];
     }

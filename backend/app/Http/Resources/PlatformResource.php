@@ -15,15 +15,17 @@ class PlatformResource extends JsonResource
 
             'name' => $this->name,
 
-            'clicks' => $this->pivot?->clicks,
-
             'slug' => $this->slug,
 
-            'icon' => $this->icon,
+            'logo' => $this->logo
+                ? asset('storage/' . $this->logo)
+                : null,
 
-            'color' => $this->color,
+            'action' => $this->action,
 
             'sort_order' => $this->sort_order,
+
+            'destination_url' => $this->pivot?->destination_url,
 
         ];
     }

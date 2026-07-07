@@ -1,42 +1,43 @@
 <template>
   <div class="max-w-4xl">
-    <h1 class="text-3xl font-bold text-white mb-8">
+    <h1 class="mb-8 text-3xl font-bold text-white">
       {{ editing ? "Edit Campaign" : "Create Campaign" }}
     </h1>
 
-    <!-- Step Indicator -->
     <StepIndicator :step="step" />
 
-    <!-- Form wrapped for final submission -->
     <form @submit.prevent="submit">
       <StepOne
         v-if="step === 1"
         v-model:form="form"
       />
+
       <StepTwo
         v-if="step === 2"
         v-model:platforms="form.platforms"
       />
+
       <StepThree
         v-if="step === 3"
         v-model:form="form"
       />
+
       <StepFour
         v-if="step === 4"
         :form="form"
       />
+
       <StepFive
         v-if="step === 5"
         :form="form"
       />
 
-      <!-- Navigation Buttons -->
-      <div class="flex justify-between mt-10">
+      <div class="mt-10 flex justify-between">
         <button
           v-if="step > 1"
           type="button"
           @click="previousStep"
-          class="px-6 py-3 rounded-xl bg-zinc-800 text-white"
+          class="rounded-xl bg-zinc-800 px-6 py-3 text-white"
         >
           Back
         </button>
@@ -45,7 +46,7 @@
           v-if="step < 5"
           type="button"
           @click="nextStep"
-          class="ml-auto px-6 py-3 rounded-xl bg-green-500 text-black"
+          class="ml-auto rounded-xl bg-green-500 px-6 py-3 text-black"
         >
           Continue
         </button>
@@ -54,7 +55,7 @@
           v-if="step === 5"
           type="submit"
           :disabled="loading"
-          class="ml-auto px-8 py-3 rounded-xl bg-green-500 text-black disabled:opacity-50"
+          class="ml-auto rounded-xl bg-green-500 px-8 py-3 text-black disabled:opacity-50"
         >
           {{ loading ? "Saving..." : "Publish Campaign" }}
         </button>
@@ -66,10 +67,10 @@
 <script setup>
 import { reactive, ref, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
+
 import { useCampaignStore } from "@/stores/campaign";
 import platformService from "@/services/platformService";
 
-// Step components
 import StepIndicator from "@/components/campaign-builder/StepIndicator.vue";
 import StepOne from "@/components/campaign-builder/StepOne.vue";
 import StepTwo from "@/components/campaign-builder/StepTwo.vue";
@@ -79,6 +80,7 @@ import StepFive from "@/components/campaign-builder/StepFive.vue";
 
 const router = useRouter();
 const route = useRoute();
+
 const campaignStore = useCampaignStore();
 
 const loading = ref(false);
@@ -89,13 +91,14 @@ const form = reactive({
   song_title: "",
   promo: "",
   artwork: null,
-  youtube_video_id: "",
+
+  youtube_video_url: "",
   youtube_channel_url: "",
-  youtube_button_text: "Subscribe",
-  youtube_button_url: "",
+
   show_video: true,
   autoplay_video: true,
   autoplay_seconds: 60,
+
   platforms: [],
 });
 
@@ -107,12 +110,9 @@ function previousStep() {
   if (step.value > 1) step.value--;
 }
 
-function selectArtwork(e) {
-  form.artwork = e.target.files[0];
-}
-
 async function loadPlatforms() {
   const { data } = await platformService.getAll();
+
   form.platforms = data.data.map(platform => ({
     platform_id: platform.id,
     name: platform.name,
@@ -124,26 +124,34 @@ async function loadPlatforms() {
 
 async function loadCampaign() {
   if (!route.params.id) return;
+
   editing.value = true;
+
   const campaign = await campaignStore.show(route.params.id);
 
-  form.song_title = campaign.song;
+  form.song_title = campaign.song_title;
   form.promo = campaign.promo;
-  form.youtube_video_id = campaign.video.video_id;
-  form.youtube_channel_url = campaign.video.channel_url;
-  form.youtube_button_text = campaign.video.button_text;
-  form.youtube_button_url = campaign.video.button_url;
-  form.show_video = campaign.video.show;
-  form.autoplay_video = campaign.video.autoplay;
-  form.autoplay_seconds = campaign.video.duration;
 
-  form.platforms.forEach(platform => {
+  form.youtube_video_url = campaign.youtube_video_url;
+  form.youtube_channel_url = campaign.youtube_channel_url;
+
+  form.show_video = campaign.show_video;
+  form.autoplay_video = campaign.autoplay_video;
+  form.autoplay_seconds = campaign.autoplay_seconds;
+
+  /*
+  |--------------------------------------------------------------------------
+  | Map platforms to include destination_url from the campaign
+  |--------------------------------------------------------------------------
+  */
+  form.platforms = form.platforms.map(platform => {
     const existing = campaign.platforms.find(
       p => p.id === platform.platform_id
     );
-    if (existing) {
-      platform.destination_url = existing.destination_url;
-    }
+    return {
+      ...platform,
+      destination_url: existing ? existing.destination_url : "",
+    };
   });
 }
 
@@ -154,27 +162,49 @@ onMounted(async () => {
 
 async function submit() {
   loading.value = true;
+
   try {
     const data = new FormData();
-    Object.keys(form).forEach(key => {
-      if (key === "platforms") return;
-      if (form[key] !== null) {
-        data.append(key, form[key]);
-      }
+
+    data.append("song_title", form.song_title);
+    data.append("promo", form.promo ?? "");
+
+    if (form.artwork) {
+      data.append("artwork", form.artwork);
+    }
+
+    data.append("youtube_video_url", form.youtube_video_url ?? "");
+    data.append("youtube_channel_url", form.youtube_channel_url ?? "");
+
+    data.append("show_video", form.show_video ? 1 : 0);
+    data.append("autoplay_video", form.autoplay_video ? 1 : 0);
+    data.append("autoplay_seconds", form.autoplay_seconds);
+
+    const selectedPlatforms = form.platforms.filter(
+      p => p.destination_url.trim() !== ""
+    );
+
+    selectedPlatforms.forEach((platform, index) => {
+      data.append(
+        `platforms[${index}][platform_id]`,
+        platform.platform_id
+      );
+      data.append(
+        `platforms[${index}][destination_url]`,
+        platform.destination_url
+      );
     });
 
-    form.platforms
-      .filter(platform => platform.destination_url.trim() !== "")
-      .forEach((platform, index) => {
-        data.append(`platforms[${index}][platform_id]`, platform.platform_id);
-        data.append(`platforms[${index}][destination_url]`, platform.destination_url);
-      });
+    let response;
 
     if (editing.value) {
-      await campaignStore.update(route.params.id, data);
+      response = await campaignStore.update(
+        route.params.id,
+        data
+      );
       router.push("/dashboard/campaigns");
     } else {
-      const response = await campaignStore.create(data);
+      response = await campaignStore.create(data);
       router.push({
         path: "/dashboard/campaign-success",
         query: {
@@ -184,6 +214,16 @@ async function submit() {
     }
   } catch (error) {
     console.error(error);
+
+    if (error.response) {
+      console.log(error.response.data);
+      alert(
+        error.response.data.message ??
+        "Unable to create campaign."
+      );
+    } else {
+      alert("Something went wrong.");
+    }
   } finally {
     loading.value = false;
   }

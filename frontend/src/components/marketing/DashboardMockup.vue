@@ -11,7 +11,7 @@
         </p>
 
         <h2 class="text-2xl font-bold">
-          Camilla
+          Ubx Okoko
         </h2>
 
       </div>

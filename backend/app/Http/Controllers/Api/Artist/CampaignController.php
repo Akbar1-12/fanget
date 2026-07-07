@@ -135,11 +135,13 @@ class CampaignController extends Controller
 
                     'youtube_channel_url' => $request->youtube_channel_url,
 
-                    'youtube_button_text' => $request->youtube_button_text,
+                    // Hard‑coded button text, and button URL uses channel URL
+                    'youtube_button_text' => 'Subscribe',
 
-                    'youtube_button_url' => $request->youtube_button_url,
+                    'youtube_button_url' => $request->youtube_channel_url,
 
-                    'show_video' => $request->boolean('show_video'),
+                    // NEW: renamed from 'show_video'
+                    'show_video_buttons' => $request->boolean('show_video_buttons'),
 
                     'autoplay_video' => $request->boolean('autoplay_video'),
 
@@ -151,29 +153,33 @@ class CampaignController extends Controller
 
                 /*
                 |--------------------------------------------------------------------------
-                | Attach Platforms
+                | Attach Platforms (if provided)
                 |--------------------------------------------------------------------------
                 */
 
-                $campaign->platforms()->sync(
+                if ($request->has('platforms') && !is_null($request->platforms)) {
 
-                    collect($request->platforms)
+                    $campaign->platforms()->sync(
 
-                        ->mapWithKeys(fn ($platform) => [
+                        collect($request->platforms)
 
-                            $platform['platform_id'] => [
+                            ->mapWithKeys(fn ($platform) => [
 
-                                'destination_url' => $platform['destination_url'],
+                                $platform['platform_id'] => [
 
-                                'enabled' => true,
+                                    'destination_url' => $platform['destination_url'],
 
-                            ]
+                                    'enabled' => true,
 
-                        ])
+                                ]
 
-                        ->toArray()
+                            ])
 
-                );
+                            ->toArray()
+
+                    );
+
+                }
 
                 return $campaign->load('platforms');
 
@@ -187,15 +193,18 @@ class CampaignController extends Controller
 
                 'campaign' => new CampaignResource($campaign),
 
-                'campaign_url' => config('app.frontend_url')
-                    . '/campaign/'
-                    . $campaign->slug,
+                'campaign_url' => rtrim(
+                    config('app.frontend_url', env('FRONTEND_URL')),
+                    '/'
+                ) . '/campaign/' . $campaign->slug,
 
             ], 201);
 
         } catch (\Throwable $e) {
 
-            Log::error($e);
+            Log::error($e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+            ]);
 
             return response()->json([
 
@@ -279,11 +288,13 @@ class CampaignController extends Controller
 
                 'youtube_channel_url' => $request->youtube_channel_url,
 
-                'youtube_button_text' => $request->youtube_button_text,
+                // Hard‑coded button text, and button URL uses channel URL
+                'youtube_button_text' => 'Subscribe',
 
-                'youtube_button_url' => $request->youtube_button_url,
+                'youtube_button_url' => $request->youtube_channel_url,
 
-                'show_video' => $request->boolean('show_video'),
+                // NEW: renamed from 'show_video'
+                'show_video_buttons' => $request->boolean('show_video_buttons'),
 
                 'autoplay_video' => $request->boolean('autoplay_video'),
 
@@ -293,29 +304,26 @@ class CampaignController extends Controller
 
             /*
             |--------------------------------------------------------------------------
-            | Sync Platforms
+            | Sync Platforms (only if provided)
             |--------------------------------------------------------------------------
             */
 
-            $campaign->platforms()->sync(
+            if ($request->has('platforms')) {
 
-                collect($request->platforms)
+                $platforms = $request->platforms;
 
+                $syncData = collect($platforms ?? [])
                     ->mapWithKeys(fn ($platform) => [
-
                         $platform['platform_id'] => [
-
                             'destination_url' => $platform['destination_url'],
-
                             'enabled' => true,
-
                         ]
-
                     ])
+                    ->toArray();
 
-                    ->toArray()
+                $campaign->platforms()->sync($syncData);
 
-            );
+            }
 
         });
 

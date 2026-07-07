@@ -138,7 +138,8 @@ const routes = [
       },
 
       {
-          path: "/dashboard/campaign-success",
+          path: "campaign-success",
+          name: "campaign-success",
           component: CampaignSuccess,
       },
     ],

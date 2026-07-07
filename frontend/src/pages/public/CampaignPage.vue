@@ -36,7 +36,7 @@
     <!-- Campaign -->
     <div
       v-else-if="campaignStore.campaign"
-      class="space-y-32"
+      class="space-y-10"
     >
       <HeroSection
         :artist="campaignStore.campaign"
