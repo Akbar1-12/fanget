@@ -1,84 +1,191 @@
 import { createRouter, createWebHistory } from "vue-router";
+import { useAuthStore } from "@/stores/auth";
 
-import Home from "../pages/Home.vue";
+/*
+|--------------------------------------------------------------------------
+| Public Pages
+|--------------------------------------------------------------------------
+*/
 
-import CampaignPage from "../pages/public/CampaignPage.vue";
+import Home from "@/pages/Home.vue";
+import CampaignPage from "@/pages/public/CampaignPage.vue";
 
-import Register from "../pages/auth/Register.vue";
-import Login from "../pages/auth/Login.vue";
-import AwaitApproval from "../pages/auth/AwaitApproval.vue";
+import Login from "@/pages/auth/Login.vue";
+import Register from "@/pages/auth/Register.vue";
+import AwaitApproval from "@/pages/auth/AwaitApproval.vue";
 
-import Dashboard from "../pages/dashboard/Dashboard.vue";
-import Campaigns from "../pages/dashboard/Campaigns.vue";
-import CreateCampaign from "../pages/dashboard/CreateCampaign.vue";
-import Subscribers from "../pages/dashboard/Subscribers.vue";
-import Settings from "../pages/dashboard/Settings.vue";
+
+/*
+|--------------------------------------------------------------------------
+| Dashboard
+|--------------------------------------------------------------------------
+*/
+
+import DashboardLayout from "@/layouts/DashboardLayout.vue";
+
+import Overview from "@/pages/dashboard/Overview.vue";
+import Campaigns from "@/pages/dashboard/Campaigns.vue";
+import CampaignBuilder from "@/pages/dashboard/CampaignBuilder.vue";
+import Subscribers from "@/pages/dashboard/Subscribers.vue";
+import Analytics from "@/pages/dashboard/Analytics.vue";
+import Settings from "@/pages/dashboard/Settings.vue";
+import CampaignSuccess from "@/pages/dashboard/CampaignSuccess.vue";
+
+/*
+|--------------------------------------------------------------------------
+| Misc
+|--------------------------------------------------------------------------
+*/
+
+import NotFound from "@/pages/NotFound.vue";
+
+const routes = [
+  /*
+  |--------------------------------------------------------------------------
+  | Public Website
+  |--------------------------------------------------------------------------
+  */
+
+  {
+    path: "/",
+    name: "home",
+    component: Home,
+  },
+
+  {
+    path: "/campaign/:slug",
+    name: "campaign",
+    component: CampaignPage,
+    props: true,
+  },
+
+  /*
+  |--------------------------------------------------------------------------
+  | Authentication
+  |--------------------------------------------------------------------------
+  */
+
+  {
+    path: "/login",
+    name: "login",
+    component: Login,
+  },
+
+  {
+    path: "/register",
+    name: "register",
+    component: Register,
+  },
+
+  {
+    path: "/await-approval",
+    name: "await-approval",
+    component: AwaitApproval,
+  },
+
+  /*
+  |--------------------------------------------------------------------------
+  | Dashboard
+  |--------------------------------------------------------------------------
+  */
+
+  {
+    path: "/dashboard",
+    component: DashboardLayout,
+
+    children: [
+      {
+        path: "",
+        name: "dashboard",
+        component: Overview,
+      },
+
+      {
+        path: "campaigns",
+        name: "campaigns",
+        component: Campaigns,
+      },
+
+      {
+        path: "campaigns/create",
+        name: "campaign-create",
+        component: CampaignBuilder,
+      },
+
+      {
+        path: "campaigns/:id/edit",
+        name: "campaign-edit",
+        component: CampaignBuilder,
+        props: true,
+      },
+
+      {
+        path: "subscribers",
+        name: "subscribers",
+        component: Subscribers,
+      },
+
+      {
+        path: "analytics",
+        name: "analytics",
+        component: Analytics,
+      },
+
+      {
+        path: "settings",
+        name: "settings",
+        component: Settings,
+      },
+
+      {
+          path: "/dashboard/campaign-success",
+          component: CampaignSuccess,
+      },
+    ],
+  },
+
+  /*
+  |--------------------------------------------------------------------------
+  | 404
+  |--------------------------------------------------------------------------
+  */
+
+  {
+    path: "/:pathMatch(.*)*",
+    component: NotFound,
+  },
+];
 
 const router = createRouter({
     history: createWebHistory(),
+    routes,
+});
 
-    routes: [
+router.beforeEach(async (to) => {
 
-        {
-            path: "/",
-            name: "home",
-            component: Home,
-        },
+    const auth = useAuthStore();
 
-        {
-            path: "/register",
-            component: Register,
-        },
+    const protectedRoutes = [
 
-        {
-            path: "/login",
-            component: Login,
-        },
+        "dashboard",
+        "campaigns",
+        "campaign-create",
+        "campaign-edit",
+        "subscribers",
+        "analytics",
+        "settings",
 
-        {
-            path: "/await-approval",
-            component: AwaitApproval,
-        },
+    ];
 
-        {
-            path: "/dashboard",
-            component: Dashboard,
-        },
+    if (
+        protectedRoutes.includes(to.name) &&
+        !auth.authenticated
+    ) {
 
-        {
-            path: "/dashboard/campaigns",
-            component: Campaigns,
-        },
+        return "/login";
 
-        {
-            path: "/dashboard/create",
-            component: CreateCampaign,
-        },
+    }
 
-        {
-            path: "/dashboard/subscribers",
-            component: Subscribers,
-        },
-
-        {
-            path: "/dashboard/settings",
-            component: Settings,
-        },
-
-        // MUST STAY LAST
-        {
-            path: "/:slug",
-            name: "campaign",
-            component: CampaignPage,
-            props: true,
-        },
-
-        {
-            path: "/:pathMatch(.*)*",
-            redirect: "/",
-        },
-
-    ],
 });
 
 export default router;

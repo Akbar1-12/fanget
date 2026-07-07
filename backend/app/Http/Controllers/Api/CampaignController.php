@@ -18,14 +18,18 @@ class CampaignController extends Controller
     }
 
     /**
-     * Admin - List campaigns
+     * Admin - List all campaigns
      */
     public function index(): JsonResponse
     {
+        $campaigns = $this->campaignService
+            ->all()
+            ->load('user', 'platforms');
+
         return response()->json([
-            'data' => CampaignResource::collection(
-                $this->campaignService->all()
-            ),
+            'success' => true,
+            'total'   => $campaigns->count(),
+            'data'    => CampaignResource::collection($campaigns),
         ]);
     }
 
@@ -39,19 +43,23 @@ class CampaignController extends Controller
         );
 
         return response()->json([
+            'success' => true,
             'message' => 'Campaign created successfully.',
-            'data' => new CampaignResource($campaign),
+            'data'    => new CampaignResource(
+                $campaign->load('user', 'platforms')
+            ),
         ], 201);
     }
 
     /**
-     * Admin - Show one campaign
+     * Admin - Show campaign
      */
     public function show(Campaign $campaign): JsonResponse
     {
         return response()->json([
-            'data' => new CampaignResource(
-                $campaign->load('platforms')
+            'success' => true,
+            'data'    => new CampaignResource(
+                $campaign->load('user', 'platforms')
             ),
         ]);
     }
@@ -63,14 +71,18 @@ class CampaignController extends Controller
         UpdateCampaignRequest $request,
         Campaign $campaign
     ): JsonResponse {
+
         $campaign = $this->campaignService->update(
             $campaign,
             $request->validated()
         );
 
         return response()->json([
+            'success' => true,
             'message' => 'Campaign updated successfully.',
-            'data' => new CampaignResource($campaign),
+            'data'    => new CampaignResource(
+                $campaign->load('user', 'platforms')
+            ),
         ]);
     }
 
@@ -82,20 +94,24 @@ class CampaignController extends Controller
         $this->campaignService->delete($campaign);
 
         return response()->json([
+            'success' => true,
             'message' => 'Campaign deleted successfully.',
         ]);
     }
 
     /**
-     * Public landing page
+     * Public Campaign Page
      */
-    public function showPublic(string $slug): CampaignResource
+    public function showPublic(string $slug): JsonResponse
     {
-        return new CampaignResource(
-            Campaign::with('platforms')
-                ->where('slug', $slug)
-                ->where('published', true)
-                ->firstOrFail()
-        );
+        $campaign = Campaign::with('user', 'platforms')
+            ->where('slug', $slug)
+            ->where('published', true)
+            ->firstOrFail();
+
+        return response()->json([
+            'success' => true,
+            'data'    => new CampaignResource($campaign),
+        ]);
     }
 }

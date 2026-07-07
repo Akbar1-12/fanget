@@ -6,53 +6,32 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Run the migrations.
+     */
     public function up(): void
     {
-        Schema::create('visitor_logs', function (Blueprint $table) {
+        Schema::table('campaigns', function (Blueprint $table) {
 
-            $table->id();
-
-            $table->unsignedBigInteger('campaign_id');
-
-            $table->unsignedBigInteger('platform_id')->nullable();
-
-            $table->string('session_id')->nullable();
-
-            $table->string('ip_address')->nullable();
-
-            $table->string('country')->nullable();
-
-            $table->string('city')->nullable();
-
-            $table->string('device')->nullable();
-
-            $table->string('browser')->nullable();
-
-            $table->string('operating_system')->nullable();
-
-            $table->string('referrer')->nullable();
-
-            $table->boolean('completed')->default(false);
-
-            $table->timestamp('clicked_at')->nullable();
-
-            $table->timestamps();
-
-            $table->foreign('campaign_id')
-                ->references('id')
-                ->on('campaigns')
-                ->onDelete('cascade');
-
-            $table->foreign('platform_id')
-                ->references('id')
-                ->on('platforms')
-                ->nullOnDelete();
+            $table->foreignId('user_id')
+                ->after('id')
+                ->constrained()
+                ->cascadeOnDelete();
 
         });
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
-        Schema::dropIfExists('visitor_logs');
+        Schema::table('campaigns', function (Blueprint $table) {
+
+            $table->dropForeign(['user_id']);
+
+            $table->dropColumn('user_id');
+
+        });
     }
 };

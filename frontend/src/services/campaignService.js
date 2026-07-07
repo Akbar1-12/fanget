@@ -7,8 +7,5 @@ export const campaignService = {
         return api.get(endpoints.campaign.show(slug));
     },
 
-    recordPlatformClick(data) {
-        return api.post(endpoints.campaign.click, data);
-    },
-
+    
 };

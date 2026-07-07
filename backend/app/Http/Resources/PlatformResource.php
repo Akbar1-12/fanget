@@ -10,11 +10,21 @@ class PlatformResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->slug,
+
+            'id' => $this->id,
+
             'name' => $this->name,
-            'logo' => asset('storage/' . $this->logo),
-            'action' => $this->action,
-            'destination_url' => $this->pivot->destination_url,
+
+            'clicks' => $this->pivot?->clicks,
+
+            'slug' => $this->slug,
+
+            'icon' => $this->icon,
+
+            'color' => $this->color,
+
+            'sort_order' => $this->sort_order,
+
         ];
     }
 }

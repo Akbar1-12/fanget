@@ -11,38 +11,28 @@ class CampaignResource extends JsonResource
     {
         return [
             'id' => $this->id,
-
             'slug' => $this->slug,
-
-            'name' => $this->artist_name,
-
+            'name' => $this->user->artist_name,
             'song' => $this->song_title,
-
             'promo' => $this->promo,
-
             'artwork' => asset('storage/' . $this->artwork),
 
-           'video' => [
+            'video' => [
+                'video_id' => $this->youtube_video_id,
+                'thumbnail' => $this->youtube_video_id
+                    ? "https://img.youtube.com/vi/{$this->youtube_video_id}/maxresdefault.jpg"
+                    : null,
+                'channel_url' => $this->youtube_channel_url,
+                'button_url' => $this->youtube_button_url,
+                'button_text' => $this->youtube_button_text,
+                'show' => (bool) $this->show_video,
+                'autoplay' => (bool) $this->autoplay_video,
+                'duration' => $this->autoplay_seconds,
+            ],
 
-    'video_id' => $this->youtube_video_id,
-
-    'thumbnail' => $this->youtube_video_id
-        ? "https://img.youtube.com/vi/{$this->youtube_video_id}/maxresdefault.jpg"
-        : null,
-
-    'channel_url' => $this->youtube_channel_url,
-
-    'button_url' => $this->youtube_button_url,
-
-    'button_text' => $this->youtube_button_text,
-
-    'show' => (bool) $this->show_video,
-
-    'autoplay' => (bool) $this->autoplay_video,
-
-    'duration' => $this->autoplay_seconds,
-
-],
+            'total_clicks' => $this->platforms->sum(
+                fn($platform) => $platform->pivot->clicks ?? 0
+            ),
 
             'platforms' => PlatformResource::collection(
                 $this->platforms->sortBy('sort_order')

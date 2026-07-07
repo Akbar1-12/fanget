@@ -1,32 +1,195 @@
 import { defineStore } from "pinia";
-import { ref } from "vue";
-import { campaignService } from "../services/campaignService";
+import api from "@/api/api";
 
-export const useCampaignStore = defineStore("campaign", () => {
-    const campaign = ref(null);
-    const loading = ref(false);
-    const error = ref(null);
+export const useCampaignStore = defineStore("campaign", {
 
-    async function loadCampaign(slug) {
-        loading.value = true;
-        error.value = null;
+    state: () => ({
 
-        try {
-            const { data } = await campaignService.getCampaign(slug);
+        campaigns: [],
 
-            campaign.value = data.data;
+        campaign: null,
 
-        } catch (err) {
-            error.value = err;
-        } finally {
-            loading.value = false;
-        }
-    }
+        loading: false,
 
-    return {
-        campaign,
-        loading,
-        error,
-        loadCampaign,
-    };
+        error: null,
+
+    }),
+
+    actions: {
+
+        async load() {
+
+            this.loading = true;
+            this.error = null;
+
+            try {
+
+                const { data } = await api.get("/v1/artist/campaigns");
+
+                this.campaigns = data.data;
+
+                return data;
+
+            } catch (error) {
+
+                this.error = error;
+
+                throw error;
+
+            } finally {
+
+                this.loading = false;
+
+            }
+
+        },
+
+        async show(id) {
+
+            this.loading = true;
+            this.error = null;
+
+            try {
+
+                const { data } = await api.get(
+                    `/v1/artist/campaigns/${id}`
+                );
+
+                this.campaign = data.data;
+
+                return data.data;
+
+            } catch (error) {
+
+                this.error = error;
+
+                throw error;
+
+            } finally {
+
+                this.loading = false;
+
+            }
+
+        },
+
+        async create(formData) {
+
+            this.loading = true;
+            this.error = null;
+
+            try {
+
+                const { data } = await api.post(
+
+                    "/v1/artist/campaigns",
+
+                    formData,
+
+                    {
+                        headers: {
+                            "Content-Type": "multipart/form-data",
+                        },
+                    }
+
+                );
+
+                await this.load();
+
+                return data;
+
+            } catch (error) {
+
+                this.error = error;
+
+                throw error;
+
+            } finally {
+
+                this.loading = false;
+
+            }
+
+        },
+
+        async update(id, formData) {
+
+            this.loading = true;
+            this.error = null;
+
+            try {
+
+                formData.append("_method", "PUT");
+
+                const { data } = await api.post(
+
+                    `/v1/artist/campaigns/${id}`,
+
+                    formData,
+
+                    {
+                        headers: {
+                            "Content-Type": "multipart/form-data",
+                        },
+                    }
+
+                );
+
+                await this.load();
+
+                return data;
+
+            } catch (error) {
+
+                this.error = error;
+
+                throw error;
+
+            } finally {
+
+                this.loading = false;
+
+            }
+
+        },
+
+        async delete(id) {
+
+            this.loading = true;
+            this.error = null;
+
+            try {
+
+                await api.delete(
+                    `/v1/artist/campaigns/${id}`
+                );
+
+                this.campaigns = this.campaigns.filter(
+
+                    campaign => campaign.id !== id
+
+                );
+
+            } catch (error) {
+
+                this.error = error;
+
+                throw error;
+
+            } finally {
+
+                this.loading = false;
+
+            }
+
+        },
+
+        clearCurrentCampaign() {
+
+            this.campaign = null;
+
+        },
+
+    },
+
 });

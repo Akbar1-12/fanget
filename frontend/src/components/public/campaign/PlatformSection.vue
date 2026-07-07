@@ -25,7 +25,7 @@
 
 <script setup>
 import { computed } from "vue";
-import MusicPlatformCard from "./MusicPlatformCard.vue";
+import MusicPlatformCard from "@/components/Platform/MusicPlatformCard.vue";
 
 const props = defineProps({
   platforms: {

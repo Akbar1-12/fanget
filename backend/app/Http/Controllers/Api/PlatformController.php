@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
+use App\Http\Resources\PlatformResource;
+use App\Models\Platform;
+
 class PlatformController extends Controller
 {
     /**
@@ -45,5 +48,20 @@ class PlatformController extends Controller
     public function destroy(string $id)
     {
         //
+    }
+
+    public function publicIndex()
+    {
+        return response()->json([
+
+            'success' => true,
+
+            'data' => PlatformResource::collection(
+
+                Platform::orderBy('sort_order')->get()
+
+            ),
+
+        ]);
     }
 }

@@ -38,7 +38,6 @@
       v-else-if="campaignStore.campaign"
       class="space-y-32"
     >
-
       <HeroSection
         :artist="campaignStore.campaign"
       />
@@ -47,7 +46,6 @@
         :platforms="campaignStore.campaign.platforms"
         @follow="startPlatformFlow"
       />
-
     </div>
 
     <ConnectingOverlay
@@ -62,25 +60,28 @@
 import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
 
-import { useCampaignStore } from "../../stores/campaign.js";
+import DefaultLayout from "@/layouts/DefaultLayout.vue";
 
-import DefaultLayout from "../layouts/DefaultLayout.vue";
-import HeroSection from "../components/Hero/HeroSection.vue";
-import PlatformSection from "../components/Platform/PlatformSection.vue";
-import ConnectingOverlay from "../components/Overlay/ConnectingOverlay.vue";
+import HeroSection from "@/components/public/campaign/HeroSection.vue";
+import PlatformSection from "@/components/public/campaign/PlatformSection.vue";
+import ConnectingOverlay from "@/components/public/campaign/ConnectingOverlay.vue";
 
-import { campaignService } from "../../services/campaignService.js";
+import { useCampaignStore } from "@/stores/campaign";
+
+import visitorService from "@/services/visitorService";
 
 const campaignStore = useCampaignStore();
-
 const route = useRoute();
 
 const showOverlay = ref(false);
-
 const selectedPlatform = ref(null);
 
-onMounted(() => {
-    campaignStore.loadCampaign(route.params.slug);
+onMounted(async () => {
+
+    await campaignStore.loadCampaign(route.params.slug);
+
+    await visitorService.log(route.params.slug);
+
 });
 
 async function startPlatformFlow(platform) {
@@ -89,28 +90,10 @@ async function startPlatformFlow(platform) {
 
     showOverlay.value = true;
 
-    try {
+    await new Promise(resolve => setTimeout(resolve, 1200));
 
-        await campaignService.recordPlatformClick({
-
-            campaign_id: campaignStore.campaign.id,
-
-            platform: platform.id,
-
-        });
-
-        await new Promise(resolve => setTimeout(resolve, 1200));
-
-        window.location.href =
-        `http://127.0.0.1:8000/api/oauth/${platform.id}/${campaignStore.campaign.slug}`;
-
-    } catch (error) {
-
-        console.error(error);
-
-        showOverlay.value = false;
-
-    }
+    window.location.href =
+        `${import.meta.env.VITE_API_URL}/oauth/${platform.slug}/${campaignStore.campaign.slug}`;
 
 }
 </script>

@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\Campaign;
 use App\Models\Platform;
+use App\Models\User;
 
 class CampaignSeeder extends Seeder
 {
@@ -12,9 +13,16 @@ class CampaignSeeder extends Seeder
     {
         Campaign::query()->delete();
 
+        $user = User::first();
+
+        if (!$user) {
+            $this->command->error('No user found. Please run UserSeeder first.');
+            return;
+        }
+
         $campaign = Campaign::create([
 
-            'artist_name' => 'Camilla',
+            'user_id' => $user->id,
 
             'song_title' => 'Position',
 
@@ -24,7 +32,7 @@ class CampaignSeeder extends Seeder
 
             'artwork' => 'artists/camilla.png',
 
-           'youtube_video_id' => 'dQw4w9WgXcQ',
+            'youtube_video_id' => 'dQw4w9WgXcQ',
 
             'youtube_channel_url' => 'https://www.youtube.com/@CamilaCabello',
 

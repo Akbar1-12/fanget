@@ -1,25 +1,20 @@
 <template>
-  <div class="min-h-screen bg-[#09090B] text-white">
+  <div class="flex min-h-screen bg-[#09090B] text-white">
+    <Sidebar />
+    <MobileSidebar />
 
-    <aside class="fixed left-0 top-0 h-screen w-64 border-r border-white/10 bg-black/40 backdrop-blur-xl">
+    <div class="flex-1 flex flex-col lg:ml-72">
+      <Topbar />
 
-      <div class="p-8">
-
-        <h1 class="text-2xl font-black text-green-400">
-
-          Fanget
-
-        </h1>
-
-      </div>
-
-    </aside>
-
-    <main class="ml-64 min-h-screen p-10">
-
-      <router-view />
-
-    </main>
-
+      <main class="flex-1 p-6 lg:p-10">
+        <router-view />
+      </main>
+    </div>
   </div>
 </template>
+
+<script setup>
+import Sidebar from "@/components/dashboard/Sidebar.vue";
+import Topbar from "@/components/dashboard/Topbar.vue";
+import MobileSidebar from "@/components/dashboard/MobileSidebar.vue";
+</script>

@@ -7,32 +7,14 @@ use Illuminate\Database\Eloquent\Model;
 class VisitorLog extends Model
 {
     protected $fillable = [
-
         'campaign_id',
-
-        'platform_id',
-
+        'platform',
         'ip_address',
-
-        'country',
-
-        'device',
-
-        'browser',
-
-        'clicked_at',
-
-        'completed',
-
+        'user_agent',
     ];
 
     public function campaign()
     {
         return $this->belongsTo(Campaign::class);
-    }
-
-    public function platform()
-    {
-        return $this->belongsTo(Platform::class);
     }
 }
