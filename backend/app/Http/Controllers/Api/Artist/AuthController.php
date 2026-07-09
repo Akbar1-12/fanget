@@ -15,7 +15,7 @@ class AuthController extends Controller
      */
     public function register(RegisterRequest $request)
     {
-        User::create([
+        $user = User::create([
 
             'name' => $request->name,
 
@@ -29,12 +29,19 @@ class AuthController extends Controller
 
         ]);
 
+        /*
+        |--------------------------------------------------------------------------
+        | Send Email Verification
+        |--------------------------------------------------------------------------
+        */
+
+        $user->sendEmailVerificationNotification();
+
         return response()->json([
 
             'success' => true,
 
-            'message' =>
-                'Registration successful. Your account is awaiting admin approval.',
+            'message' => 'Registration successful. Please verify your email before logging in.',
 
         ], 201);
     }
@@ -45,6 +52,12 @@ class AuthController extends Controller
     public function login(LoginRequest $request)
     {
         $user = User::where('email', $request->email)->first();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Invalid Credentials
+        |--------------------------------------------------------------------------
+        */
 
         if (!$user || !Hash::check($request->password, $user->password)) {
 
@@ -57,17 +70,49 @@ class AuthController extends Controller
             ], 401);
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | Email Verification
+        |--------------------------------------------------------------------------
+        */
+
+        if (!$user->hasVerifiedEmail()) {
+
+            return response()->json([
+
+                'success' => false,
+
+                'verified' => false,
+
+                'message' => 'Please verify your email address before logging in.',
+
+            ], 403);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Admin Approval
+        |--------------------------------------------------------------------------
+        */
+
         if (!$user->is_approved) {
 
             return response()->json([
 
                 'success' => false,
 
-                'message' =>
-                    'Your account is awaiting admin approval.',
+                'approved' => false,
+
+                'message' => 'Your account is awaiting admin approval.',
 
             ], 403);
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Create Token
+        |--------------------------------------------------------------------------
+        */
 
         $token = $user->createToken('fanget-user')->plainTextToken;
 
@@ -101,7 +146,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Current User
+     * Current Authenticated User
      */
     public function me()
     {

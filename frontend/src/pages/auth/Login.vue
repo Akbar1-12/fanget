@@ -48,6 +48,16 @@
         </button>
       </div>
 
+      <!-- Forgot Password Link -->
+      <div class="flex justify-end">
+        <RouterLink
+          to="/forgot-password"
+          class="text-sm text-green-400 hover:underline"
+        >
+          Forgot Password?
+        </RouterLink>
+      </div>
+
       <!-- Login Button -->
       <button
         :disabled="loading"
@@ -94,15 +104,46 @@ async function submit() {
     await auth.login(form);
     router.push("/dashboard");
   } catch (error) {
-    if (error.status === 403) {
+    /*
+    |--------------------------------------------------------------------------
+    | Email not verified
+    |--------------------------------------------------------------------------
+    */
+    if (
+      error.response?.status === 403 &&
+      error.response?.data?.verified === false
+    ) {
+      router.push({
+        name: "verify-email",
+        query: {
+          email: form.email,
+        },
+      });
+      return;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Awaiting approval
+    |--------------------------------------------------------------------------
+    */
+    if (
+      error.response?.status === 403 &&
+      error.response?.data?.approved === false
+    ) {
       router.push("/await-approval");
       return;
     }
-    if (error.status === 401) {
+
+    if (error.response?.status === 401) {
       alert("Invalid email or password.");
       return;
     }
-    alert(error.data?.message || "Something went wrong.");
+
+    alert(
+      error.response?.data?.message ||
+      "Something went wrong."
+    );
   } finally {
     loading.value = false;
   }

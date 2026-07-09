@@ -13,7 +13,9 @@ import CampaignPage from "@/pages/public/CampaignPage.vue";
 import Login from "@/pages/auth/Login.vue";
 import Register from "@/pages/auth/Register.vue";
 import AwaitApproval from "@/pages/auth/AwaitApproval.vue";
-
+import ForgotPassword from "@/pages/auth/ForgotPassword.vue";
+import ResetPassword from "@/pages/auth/ResetPassword.vue";
+import VerifyEmail from "@/pages/auth/VerifyEmail.vue";
 
 /*
 |--------------------------------------------------------------------------
@@ -40,121 +42,160 @@ import CampaignSuccess from "@/pages/dashboard/CampaignSuccess.vue";
 import NotFound from "@/pages/NotFound.vue";
 
 const routes = [
-  /*
-  |--------------------------------------------------------------------------
-  | Public Website
-  |--------------------------------------------------------------------------
-  */
+    /*
+    |--------------------------------------------------------------------------
+    | Public Website
+    |--------------------------------------------------------------------------
+    */
 
-  {
-    path: "/",
-    name: "home",
-    component: Home,
-  },
+    {
+        path: "/",
+        name: "home",
+        component: Home,
+    },
 
-  {
-    path: "/campaign/:slug",
-    name: "campaign",
-    component: CampaignPage,
-    props: true,
-  },
-
-  /*
-  |--------------------------------------------------------------------------
-  | Authentication
-  |--------------------------------------------------------------------------
-  */
-
-  {
-    path: "/login",
-    name: "login",
-    component: Login,
-  },
-
-  {
-    path: "/register",
-    name: "register",
-    component: Register,
-  },
-
-  {
-    path: "/await-approval",
-    name: "await-approval",
-    component: AwaitApproval,
-  },
-
-  /*
-  |--------------------------------------------------------------------------
-  | Dashboard
-  |--------------------------------------------------------------------------
-  */
-
-  {
-    path: "/dashboard",
-    component: DashboardLayout,
-
-    children: [
-      {
-        path: "",
-        name: "dashboard",
-        component: Overview,
-      },
-
-      {
-        path: "campaigns",
-        name: "campaigns",
-        component: Campaigns,
-      },
-
-      {
-        path: "campaigns/create",
-        name: "campaign-create",
-        component: CampaignBuilder,
-      },
-
-      {
-        path: "campaigns/:id/edit",
-        name: "campaign-edit",
-        component: CampaignBuilder,
+    {
+        path: "/campaign/:slug",
+        name: "campaign",
+        component: CampaignPage,
         props: true,
-      },
+    },
 
-      {
-        path: "subscribers",
-        name: "subscribers",
-        component: Subscribers,
-      },
+    /*
+    |--------------------------------------------------------------------------
+    | Authentication
+    |--------------------------------------------------------------------------
+    */
 
-      {
-        path: "analytics",
-        name: "analytics",
-        component: Analytics,
-      },
+    {
+        path: "/login",
+        name: "login",
+        component: Login,
+        meta: {
+            guest: true,
+        },
+    },
 
-      {
-        path: "settings",
-        name: "settings",
-        component: Settings,
-      },
+    {
+        path: "/register",
+        name: "register",
+        component: Register,
+        meta: {
+            guest: true,
+        },
+    },
 
-      {
-          path: "campaign-success",
-          name: "campaign-success",
-          component: CampaignSuccess,
-      },
-    ],
-  },
+    {
+        path: "/await-approval",
+        name: "await-approval",
+        component: AwaitApproval,
+    },
 
-  /*
-  |--------------------------------------------------------------------------
-  | 404
-  |--------------------------------------------------------------------------
-  */
+    {
+        path: "/verify-email",
+        name: "verify-email",
+        component: VerifyEmail,
+    },
 
-  {
-    path: "/:pathMatch(.*)*",
-    component: NotFound,
-  },
+    /*
+    |--------------------------------------------------------------------------
+    | Password Reset
+    |--------------------------------------------------------------------------
+    */
+
+    {
+        path: "/forgot-password",
+        name: "forgot-password",
+        component: ForgotPassword,
+        meta: {
+            guest: true,
+        },
+    },
+
+    {
+        path: "/reset-password",
+        name: "reset-password",
+        component: ResetPassword,
+        meta: {
+            guest: true,
+        },
+    },
+
+    /*
+    |--------------------------------------------------------------------------
+    | Dashboard
+    |--------------------------------------------------------------------------
+    */
+
+    {
+        path: "/dashboard",
+        component: DashboardLayout,
+        meta: {
+            requiresAuth: true,
+        },
+
+        children: [
+            {
+                path: "",
+                name: "dashboard",
+                component: Overview,
+            },
+
+            {
+                path: "campaigns",
+                name: "campaigns",
+                component: Campaigns,
+            },
+
+            {
+                path: "campaigns/create",
+                name: "campaign-create",
+                component: CampaignBuilder,
+            },
+
+            {
+                path: "campaigns/:id/edit",
+                name: "campaign-edit",
+                component: CampaignBuilder,
+                props: true,
+            },
+
+            {
+                path: "subscribers",
+                name: "subscribers",
+                component: Subscribers,
+            },
+
+            {
+                path: "analytics",
+                name: "analytics",
+                component: Analytics,
+            },
+
+            {
+                path: "settings",
+                name: "settings",
+                component: Settings,
+            },
+
+            {
+                path: "campaign-success",
+                name: "campaign-success",
+                component: CampaignSuccess,
+            },
+        ],
+    },
+
+    /*
+    |--------------------------------------------------------------------------
+    | 404
+    |--------------------------------------------------------------------------
+    */
+
+    {
+        path: "/:pathMatch(.*)*",
+        component: NotFound,
+    },
 ];
 
 const router = createRouter({
@@ -163,30 +204,28 @@ const router = createRouter({
 });
 
 router.beforeEach(async (to) => {
-
     const auth = useAuthStore();
 
-    const protectedRoutes = [
-
-        "dashboard",
-        "campaigns",
-        "campaign-create",
-        "campaign-edit",
-        "subscribers",
-        "analytics",
-        "settings",
-
-    ];
-
-    if (
-        protectedRoutes.includes(to.name) &&
-        !auth.authenticated
-    ) {
-
-        return "/login";
-
+    // Restore auth from localStorage if page refreshed
+    if (!auth.user && localStorage.getItem("token")) {
+        try {
+            await auth.fetchUser();
+        } catch (e) {
+            auth.logout();
+        }
     }
 
+    // Guest pages
+    if (to.meta.guest && auth.authenticated) {
+        return "/dashboard";
+    }
+
+    // Protected pages
+    if (to.meta.requiresAuth && !auth.authenticated) {
+        return "/login";
+    }
+
+    return true;
 });
 
 export default router;
